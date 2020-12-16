@@ -15,12 +15,12 @@ while True:
             exit()
 
 
-    mandel.move()
+    mandel.control()
     mandel.render()
 
     surface = pygame.surfarray.make_surface(mandel.getImg())
 
-    screen.blit(surface, (10, 0))
+    screen.blit(surface, (1, 0))
     pygame.display.flip()
     clock.tick(60)
 
