@@ -2,11 +2,29 @@ from config import *
 import numpy as np
 from numba import jit,njit,prange
 import pygame
-from cv2 import imwrite,rotate,ROTATE_90_COUNTERCLOCKWISE
-import math
+from cv2 import imwrite,transpose,imread,imshow,waitKey
+import matplotlib.pyplot as plt
 
+# -----------------------------------------------------------------------------
 # Funções fora da classe para usar o numba já que por algum motivo
 # o numba não consegue trasformar a classe Mandelbrot em codigo C
+# -----------------------------------------------------------------------------
+
+# dado um ponto e uma escolha de presets, retorna a cor correspondente
+@jit(nopython=True)
+def attColor(n,scheme):
+    # por falta de criatividade
+    if scheme == 'tema1':
+        return np.array([(n * 1)%255,(n * 2)%255,(n * 5)%255], dtype=np.uint8)
+    if scheme == 'tema2':
+        return np.array([(n * 1)%255,(n * 1)%255,(n * 3)%255], dtype=np.uint8)
+    if scheme == 'tema3':
+        return np.array([(n * 2)%255,(n * 1)%255,(n * 2)%255], dtype=np.uint8)
+    if scheme == 'tema4':
+        return np.array([(n * 0.5)%255,(n * 0.2)%255,(n * 0.3)%255], dtype=np.uint8)
+
+# Dado um ponto no plano complexo, verifica se ele está no conjunto
+# e retorna uma cor de acordo com a divergencia da série
 @jit(nopython=True)
 def secMandel(c,iter):
     z0 = complex(0, 0)
@@ -15,8 +33,7 @@ def secMandel(c,iter):
         z0 = zn
         if abs(z0) > INFINITO:
             n = _
-            return np.array([(n * 1) % 255, (n * 2) % 255, (n * 3) % 255], dtype=np.uint8)
-
+            return attColor(n,SCHEME)
     else:
         return np.array([0, 0, 0], dtype=np.uint8)
 
@@ -32,6 +49,8 @@ def inCardioid(c):
     else:
         return False
 
+# Para cada ponto dentro do rect [a,b]x[c,d], calcula se pertence
+# ou não ao conjunto, usando processamento paralelo
 @njit(parallel=True)
 def calcSet(img,linx,liny,iter):
     for x in prange(img.shape[0]):
@@ -43,6 +62,7 @@ def calcSet(img,linx,liny,iter):
                 img[x][y] = secMandel(c,iter)
     return img
 
+# -----------------------------------------------------------------------------
 
 class Mandelbrot:
 
@@ -50,17 +70,20 @@ class Mandelbrot:
     def __init__(self):
         self.title = window_name
 
+        # intervalos do rect [a,b]x[c,d]
         self.a =-1
         self.b = 1
         self.c = -1 / PROPORCAO
         self.d = 1 / PROPORCAO
-        # rect [a,b]x[c,d]
+
+        # Pontos igualmente espaçados para calcular o set
         self.linx = np.linspace(self.a,self.b,WIDTH)
         self.liny = np.linspace(self.c,self.d,HEIGHT)
 
         self.img = np.ones((WIDTH,HEIGHT,3),dtype=np.uint8)
         self.iter = ITER
 
+        # Fatores de intensidade de  translação e zoom
         self.fact = FACT
         self.facz = FACZ
 
@@ -72,15 +95,37 @@ class Mandelbrot:
     def render(self):
         self.img = calcSet(self.img,self.linx,self.liny,ITER)
 
+
     def print(self):
         print("Printing...")
         plinx = np.linspace(self.a, self.b, RENDER[0])
         pliny = np.linspace(self.c, self.d, RENDER[1])
+
         pimg = np.ones((RENDER[0],RENDER[1],3),dtype=np.uint8)
         pimg = calcSet(pimg,plinx,pliny,PITER)
-        imwrite("Mandelbrot.png", pimg)
+        pimg = transpose(pimg)
+
+        imwrite(self.title+".png", pimg)
         print("DONE!")
 
+        self.displayImg()
+
+    def displayImg(self):
+
+        window_name = self.title+".png"
+        pimg = imread(window_name)
+
+        # Mostrando o resultado usando pyplot
+        plt.title(window_name)
+        plt.imshow(pimg)
+        plt.show()
+
+        # Mostrando o resultado usando cv2
+        imshow(window_name, pimg)
+        waitKey(0)
+
+    # Ajusta os intervalos [a,b] e [c,d] para serem transladados
+    # por uma porcentagem do tamanho do intervalo dado uma direção
     def move(self,direction):
         if direction == 'up':
             self.liny -= (self.liny[-1] - self.liny[0]) * self.fact
@@ -116,7 +161,6 @@ class Mandelbrot:
             self.liny = np.linspace(self.c, self.d, HEIGHT)
 
 
-
     def control(self):
         keys = pygame.key.get_pressed()
 
@@ -144,3 +188,5 @@ class Mandelbrot:
             self.zoom('out')
         if keys[pygame.K_x]:
             self.zoom('in')
+
+        #print((self.a,self.b))

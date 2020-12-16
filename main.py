@@ -22,5 +22,5 @@ while True:
 
     screen.blit(surface, (1, 0))
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(FPS)
 
