@@ -1,6 +1,6 @@
 from config import *
 import numpy as np
-from numba import jit
+from numba import jit,njit,prange
 import pygame
 from cv2 import imwrite,rotate,ROTATE_90_COUNTERCLOCKWISE
 import math
@@ -32,10 +32,10 @@ def inCardioid(c):
     else:
         return False
 
-@jit(nopython=True)
+@njit(parallel=True)
 def calcSet(img,linx,liny,iter):
-    for x in range(img.shape[0]):
-        for y in range(img.shape[1]):
+    for x in prange(img.shape[0]):
+        for y in prange(img.shape[1]):
             c = complex(linx[x],liny[y])
             if inCardioid(c):
                 img[x][y] = np.array([0, 0, 0], dtype=np.uint8)
@@ -77,7 +77,7 @@ class Mandelbrot:
         plinx = np.linspace(self.a, self.b, RENDER[0])
         pliny = np.linspace(self.c, self.d, RENDER[1])
         pimg = np.ones((RENDER[0],RENDER[1],3),dtype=np.uint8)
-        pimg = calcSet(pimg,plinx,pliny,5000)
+        pimg = calcSet(pimg,plinx,pliny,PITER)
         imwrite("Mandelbrot.png", pimg)
         print("DONE!")
 
