@@ -14,7 +14,6 @@ while True:
         if event.type == pygame.QUIT:
             exit()
 
-
     mandel.control()
     mandel.render()
 
@@ -23,4 +22,3 @@ while True:
     screen.blit(surface, (1, 0))
     pygame.display.flip()
     clock.tick(FPS)
-

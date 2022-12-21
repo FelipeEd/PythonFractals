@@ -4,11 +4,11 @@
 
 # Tamanho das telas, display e impressão(Render)
 window_name = "Mandelbrot"
-WIDTH,HEIGHT = 960,540
+WIDTH, HEIGHT = 960, 540
 
-RENDER = (WIDTH*2,HEIGHT*2)
+RENDER = (WIDTH * 2, HEIGHT * 2)
 
-PROPORCAO = WIDTH/HEIGHT
+PROPORCAO = WIDTH / HEIGHT
 
 # Quantas iterações para verificar se o ponto
 # está ou nao no conjunto, modo iterativo e
@@ -33,6 +33,4 @@ SCHEME = 'tema1'
 # z : zoom out
 # x : zoom in
 # space: salvar uma imagem com maior qualidade
-
 # -----------------------------------------------------------------------------
-
